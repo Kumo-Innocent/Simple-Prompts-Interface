@@ -1,0 +1,133 @@
+[
+  {
+    "display": "Fautes",
+    "type": "Prompt_Type.TEXT",
+    "title": "faute",
+    "endpoint": "/chat/completions",
+    "prompt": "Corrige et améliore le texte suivant en te concentrant sur les aspects suivants : orthographe, grammaire, syntaxe, concordance des temps, et accord des mots. Rends le texte fluide et agréable à lire tout en utilisant un registre accessible au grand public. Adapte le style pour qu'il soit naturel, engageant et en adéquation avec un site internet d'actualités généraliste. Veille à ce que le texte soit 'humanisé', c’est-à-dire qu’il ressemble à un contenu écrit par un auteur humain et non par une intelligence artificielle. Évite tous les éléments qui pourraient être rédigés par une agence de communication. Reste purement factuel. Voici le texte à corriger : [PROMPT_VAR].",
+    "variable": [
+      {
+        "search": "PROMPT_VAR",
+        "type": "Input_Type.TEXTAREA"
+      }
+    ]
+  },
+  {
+    "display": "Générateur de Chapo",
+    "type": "Prompt_Type.TEXT",
+    "title": "chapo",
+    "endpoint": "/chat/completions",
+    "prompt": "Je souhaite rédiger un chapeau descriptif répondant aux 5W (Qui, Quoi, Où, Quand, Pourquoi) pour un article. Le chapeau doit être concis, informatif et ne pas dépasser 180 caractères. Merci de proposer 3 variantes de chapeaux captivants et bien structurés, tout en respectant le temps de conjugaison de l'article. Voici l'article : [PROMPT_VAR].",
+    "variable": [
+      {
+        "search": "PROMPT_VAR",
+        "type": "Input_Type.TEXTAREA"
+      }
+    ]
+  },
+  {
+    "display": "Générateur de Titre",
+    "type": "Prompt_Type.TEXT",
+    "title": "titre",
+    "endpoint": "/chat/completions",
+    "prompt": "J'ai rédigé un article : [PROMPT_VAR]. Peux-tu proposer un titre engageant et incitatif qui suscite l'intérêt tout en préservant le mystère autour du contenu ? Le titre doit répondre à au moins 3 des 5W (Qui, Quoi, Où, Quand, Pourquoi) et être rédigé au présent. Limite de 110 caractères, clair et soigné.",
+    "variable": [
+      {
+        "search": "PROMPT_VAR",
+        "type": "Input_Type.TEXTAREA"
+      }
+    ]
+  },
+  {
+    "display": "Générateur d'Article de Presse",
+    "type": "Prompt_Type.TEXT",
+    "title": "article",
+    "endpoint": "/chat/completions",
+    "prompt": "Voici un communiqué de presse : [PROMPT_VAR]. Demande : J'aimerai que tu rédiges un nouvel article de presse factuel, axé sur [ANGLE_ARTICLE], avec un titre accrocheur, en prenant appui sur le communiqué de presse fourni. Il faut que le nouvel article soit totalement inédit.",
+    "variable": [
+      {
+        "search": "PROMPT_VAR",
+        "type": "Input_Type.TEXTAREA",
+        "title": "Communiqué de presse"
+      },
+      {
+        "search": "ANGLE_ARTICLE",
+        "type": "Input_Type.TEXT",
+        "title": "Angle de l'article"
+      }
+    ]
+  },
+  {
+    "display": "Générateur d'Article de Presse v2",
+    "type": "Prompt_Type.TEXT",
+    "title": "articlev2",
+    "endpoint": "/chat/completions",
+    "prompt": "Voici mon article de presse : [PROMPT_VAR]. Voici l'interview que j'ai réalisée de [INTERVIEWED] ; voici son interview : [INTERVIEW]. Demande : J'aimerai que tu rédiges un nouvel article de presse factuel, axé sur [ANGLE_ARTICLE], avec un titre accrocheur, en prenant appui sur l'article de presse et sur l'interview. Tu dois inclure des citations de mon interview. Il faut impérativement que le nouvel article soit totalement inédit.",
+    "variable": [
+      {
+        "search": "PROMPT_VAR",
+        "type": "Input_Type.TEXTAREA",
+        "title": "Article de presse"
+      },
+      {
+        "search": "INTERVIEWED",
+        "type": "Input_Type.TEXT",
+        "title": "Nom de la personne interviewée et son activité"
+      },
+      {
+        "search": "INTERVIEW",
+        "type": "Input_Type.TEXTAREA",
+        "title": "Interview"
+      },
+      {
+        "search": "ANGLE_ARTICLE",
+        "type": "Input_Type.TEXT",
+        "title": "Angle de l'article"
+      }
+    ]
+  },
+  {
+    "display": "Retranscription d'audio",
+    "type": "Prompt_Type.FILE",
+    "title": "audio",
+    "endpoint": "/audio/transcriptions",
+    "prompt": "",
+    "variable": [
+      {
+        "search": "AUDIO",
+        "type": "Input_Type.AUDIO",
+        "title": "Audio à retranscrire"
+      }
+    ],
+    "headers": {
+      "Content-Type": "multipart/form-data"
+    }
+  },
+  {
+    "display": "Exemple création de prompt",
+    "type": "Prompt_Type.TEXT",
+    "title": "example",
+    "endpoint": "/chat/completions",
+    "prompt": "Ta réponse doit inclure uniquement ce que je demande. Tu t'adresse à ce type de personne : [SPECTATEURS]. Décrit du mieux possible le sujet suivant, en [CHARS] lettres maximum : [SUJET].",
+    "variable": [
+      {
+        "search": "SUJET",
+        "type": "Input_Type.TEXT",
+        "title": "Le sujet"
+      },
+      {
+        "search": "SPECTATEURS",
+        "type": "Input_Type.TEXT",
+        "title": "Spectateurs visés"
+      },
+      {
+        "search": "CHARS",
+        "type": "Input_Type.RANGE",
+        "title": "Nombre de lettres max",
+        "min": 0,
+        "max": 800,
+        "value": 190
+      }
+    ]
+  }
+]

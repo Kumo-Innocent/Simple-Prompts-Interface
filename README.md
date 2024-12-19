@@ -1,23 +1,70 @@
-# Getting Started with Create React App
+# Simple GPT Prompts interface
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project allow you to run GPT prompts with parameters.\
+Feel free to fork this repository, many functionalities can be added.
 
-## Available Scripts
+## Homepage
 
-In the project directory, you can run:
+Remember to edit the `package.json` file to [change the `homepage` entry !](https://create-react-app.dev/docs/deployment/#building-for-relative-paths)
 
-### `npm start`
+## Add or edit prompts
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+__After build,__ you need to edit the file `prompts.json` to add or edit existing prompts.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Edit
 
-### `npm test`
+Simply edit the prompt.\
+To add more variables, please refer to the __Add__ section.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Add
+
+You can add prompts that fetch text or audio file.\
+Here is the definition of a Prompt :\
+
+| JSON Object Entry | Description                                                 | Available                                                                                                          | Required |
+|-------------------|-------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|----------|
+| display           | The name actually displayed                                 | string                                                                                                             | Yes      |
+| type              | Type of prompt (text or audio )                             | `Prompt_Type.TEXT` OR `Prompt_Type.FILE`                                                                           | Yes      |
+| title             | Unique identifier of the prompt                             | string                                                                                                             | Yes      |
+| endpoint          | The GPT endpoint where prompt will be sent                  | string                                                                                                             | Yes      |
+| prompt            | [The actual prompt, with variables](#gpt-prompts-variables) | string                                                                                                             | Yes      |
+| variable          | Array of variables for the prompt                           | Variable[]                                                                                                         | Yes      |
+| headers           | Add some headers to the request                             | Object [_(same as fetch)_](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch#setting_headers) | No       |
+
+<a name="gpt-prompts-variables"></a>
+### Prompt's variables
+
+Before the prompt is sent to GPT, the interface will replace every variable's `search` entry by the user input.\
+Here is the definition of a Variable :\
+
+| JSON Object Entry | Description                                                      | Available                                  | Required |
+|-------------------|------------------------------------------------------------------|--------------------------------------------|----------|
+| search            | What is searched in the prompt to remplace with user's data      | string                                     | Yes      |
+| type              | Type of input to render for user input                           | [The input type](#gpt-prompts-input-types) | Yes      |
+| title             | Label of the input                                               | string                                     | No       |
+| min               | FOR `Input_Type.NUMBER` AND `Input_Type.RANGE`, min of the input | number                                     | No       |
+| max               | FOR `Input_Type.NUMBER` AND `Input_Type.RANGE`, max of the input | number                                     | No       |
+| value             | FOR `Input_Type.RANGE`, default value of input                   | number                                     | No       |
+
+<a name="gpt-prompts-input-types"></a>
+### Input Types
+| Name                  | Description                                         |
+|-----------------------|-----------------------------------------------------|
+| `Input_Type.TEXT`     | Input of type text (single line)                    |
+| `Input_Type.TEXTAREA` | Textarea for bigger text                            |
+| `Input_Type.NUMBER`   | Input of type number                                |
+| `Input_Type.RANGE`    | Range \[0;100] OR \[min;max]                        |
+| `Input_Type.AUDIO`    | Predefined upload file button for audio recognizion |
+
+## Build the interface
+
+To correctly build the interface, you will need to create the file ".env.local" at project's root.\
+This file will contain your OpenAI's API key, like the following :
+```
+REACT_APP_GPT_KEY=YOUR-KEY-HERE
+```
+
+The `dotenv` library will hardcode that to the interface.
 
 ### `npm run build`
 
@@ -25,45 +72,9 @@ Builds the app for production to the `build` folder.\
 It correctly bundles React in production mode and optimizes the build for the best performance.
 
 The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Your app is ready to be deployed !
 
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
 
 ### `npm run build` fails to minify
 
