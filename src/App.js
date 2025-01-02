@@ -1,4 +1,7 @@
 import {useEffect, useMemo, useRef, useState} from "react";
+import base_prompts from "./prompts.json";
+
+const base_url = `${document.location.origin}/build/`;
 
 /**
  * @typedef {Input_Type} Input_Type
@@ -88,7 +91,7 @@ export const RenderRangeInput = ({variable,random_name}) => {
 
 const App = () => {
 
-	const base_prompts = require("./prompts.json");
+	let base_prompts = require("./prompts.json");
 
 	const [dark, setDark] = useState(false);
 	const [prompts, setPrompts] = useState([]);
@@ -99,6 +102,26 @@ const App = () => {
 	const model = useRef(null);
 	const buttonsRef = useRef(null);
 	const choosePrompt = useRef(null);
+
+	useEffect(() => {
+		async function fetchPrompts() {
+			try {
+				const response = await fetch( `${base_url}/prompts.json` );
+				if(! response.ok) {
+					throw new Error(`HTTP error ! Status : ${response.status}`);
+				}
+				const data = await response.json();
+				const result = resolve_types(data, {
+					'Prompt_Type': Prompt_Type,
+					'Input_Type': Input_Type
+				});
+				setPrompts([...result]);
+			} catch (error) {
+				console.error("New error : ", error);
+			}
+		}
+		fetchPrompts();
+	}, []);
 
 	/**
 	 * GPT KEY
