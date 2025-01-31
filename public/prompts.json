@@ -19,6 +19,7 @@
       "type": "Prompt_Type.TEXT",
       "title": "faute",
       "endpoint": "/chat/completions",
+      "perplexity": true,
       "prompt": "Corrige et améliore le texte suivant en te concentrant sur les aspects suivants : orthographe, grammaire, syntaxe, concordance des temps, et accord des mots. Rends le texte fluide et agréable à lire tout en utilisant un registre accessible au grand public. Adapte le style pour qu'il soit naturel, engageant et en adéquation avec un site internet d'actualités généraliste. Veille à ce que le texte soit 'humanisé', c’est-à-dire qu’il ressemble à un contenu écrit par un auteur humain et non par une intelligence artificielle. Évite tous les éléments qui pourraient être rédigés par une agence de communication. Reste purement factuel. Voici le texte à corriger : [PROMPT_VAR].",
       "variable": [
         {

@@ -3,6 +3,10 @@
 This project allow you to run GPT prompts with parameters.\
 Feel free to fork this repository, many functionalities can be added.
 
+## Perplexity
+This project allow [Perplexity AI](https://www.perplexity.ai/) integration.\
+By default, using `sonar` model and [default values for a chat completion request](https://docs.perplexity.ai/api-reference/chat-completions).
+
 ## Homepage
 
 Remember to edit the `package.json` file to [change the `homepage` entry !](https://create-react-app.dev/docs/deployment/#building-for-relative-paths)
@@ -19,7 +23,7 @@ To add more variables, please refer to the __Add__ section.
 ### Add
 
 You can add prompts that fetch text or audio file.\
-Here is the definition of a Prompt :\
+Here is the definition of a Prompt :
 
 | JSON Object Entry | Description                                                 | Available                                                                                                          | Required |
 |-------------------|-------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|----------|
@@ -30,12 +34,13 @@ Here is the definition of a Prompt :\
 | prompt            | [The actual prompt, with variables](#gpt-prompts-variables) | string                                                                                                             | Yes      |
 | variable          | Array of variables for the prompt                           | Variable[]                                                                                                         | Yes      |
 | headers           | Add some headers to the request                             | Object [_(same as fetch)_](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch#setting_headers) | No       |
+| perplexity        | Allow using Perplexity with this prompt                     | boolean _(true/false)_                                                                                             | No       |
 
 <a name="gpt-prompts-variables"></a>
 ### Prompt's variables
 
 Before the prompt is sent to GPT, the interface will replace every variable's `search` entry by the user input.\
-Here is the definition of a Variable :\
+Here is the definition of a Variable :
 
 | JSON Object Entry | Description                                                      | Available                                  | Required |
 |-------------------|------------------------------------------------------------------|--------------------------------------------|----------|
@@ -62,6 +67,7 @@ To correctly build the interface, you will need to create the file ".env.local" 
 This file will contain your OpenAI's API key, like the following :
 ```
 REACT_APP_GPT_KEY=YOUR-KEY-HERE
+REACT_APP_PERPLEXITY_KEY=YOUR-KEY-HERE
 ```
 
 The `dotenv` library will hardcode that to the interface.

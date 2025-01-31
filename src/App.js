@@ -1,5 +1,9 @@
 import {useEffect, useMemo, useRef, useState} from "react";
 
+import { marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
+
+import DOMPurify from 'dompurify';
+
 const base_url = `${document.location.origin}/build/`;
 
 /**
@@ -29,6 +33,7 @@ const base_url = `${document.location.origin}/build/`;
  * @property {string} endpoint - Used endpoint
  * @property {string|Variable[]} variable - Variable name to replace with input
  * @property {Object} [headers] - Additional headers for request
+ * @property {boolean} [perplexity] - Do Perplexity can be used with this prompt
  */
 
 /**
@@ -97,11 +102,17 @@ const App = () => {
 	const [prompts, setPrompts] = useState([]);
 	const [prompt, setPrompt] = useState(base_prompts.prompts[0].title);
 	const [result, setResult] = useState(null);
+	const [sources, setSources] = useState([]);
+	const [usingPerplexity, setUsingPerplexity] = useState(false);
+	const [usingOnlyPerplexity, setUsingOnlyPerplexity] = useState(false);
+	const [perplexityResponse, setPerplexityResponse] = useState('');
 
 	const loader = useRef(null);
 	const model = useRef(null);
 	const buttonsRef = useRef(null);
 	const choosePrompt = useRef(null);
+	const usePerplexity = useRef(null);
+	const onlyPerplexity = useRef(null);
 
 	useEffect(() => {
 		async function fetchPrompts() {
@@ -129,6 +140,11 @@ const App = () => {
 	 * @type string
 	 */
 	const api_key = process.env.REACT_APP_GPT_KEY;
+	/**
+	 * Perplexity API Key
+	 * @type string
+	 */
+	const perplexity_key = process.env.REACT_APP_PERPLEXITY_KEY;
 	/**
 	 * GPT API URL
 	 * @type string
@@ -249,6 +265,86 @@ const App = () => {
 		}
 	};
 
+	const perplexityChoice = useMemo(()=>{
+		let current_prompt = prompts.filter(i => i.title === prompt) ?? prompts[0];
+		if (
+			Array.isArray(current_prompt) &&
+			current_prompt.length !== 0
+		) current_prompt = current_prompt[0];
+		return (
+			<>
+				{
+					current_prompt?.perplexity && current_prompt?.perplexity === true && <div
+						className="w-full grid grid-cols-2"
+					>
+						<div
+							className="w-full flex justify-start"
+						>
+							<div
+								className="flex items-center h-5"
+							>
+								<input
+									type="checkbox"
+									id="use-perplexity"
+									name="use-perplexity"
+									className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-0"
+									ref={usePerplexity}
+									onChange={() => setUsingPerplexity(prevState => !prevState)}
+								/>
+							</div>
+							<div
+								className="ms-2 text-sm"
+							>
+								<label
+									htmlFor="use-perplexity"
+									className="font-medium text-gray-900"
+								>Utiliser Perplexity</label>
+								<p
+									id="use-perplexity-helper"
+									className="text-xs font-normal text-gray-500"
+								>
+									Envoyer le prompt à Perplexity, puis à Chat GPT
+								</p>
+							</div>
+						</div>
+						{
+							usingPerplexity && <div
+								className="w-full flex justify-start"
+							>
+								<div
+									className="flex items-center h-5"
+								>
+									<input
+										type="checkbox"
+										id="only-perplexity"
+										name="only-perplexity"
+										className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-0"
+										ref={onlyPerplexity}
+										onChange={() => setUsingOnlyPerplexity(prevState => !prevState)}
+									/>
+								</div>
+								<div
+									className="ms-2 text-sm"
+								>
+									<label
+										htmlFor="only-perplexity"
+										className="font-medium text-gray-900"
+									>Utiliser <strong>seulement</strong> Perplexity</label>
+									<p
+										id="only-perplexity-helper"
+										className="text-xs font-normal text-gray-500"
+									>
+										Envoyer le prompt à Perplexity.
+									</p>
+								</div>
+							</div>
+						}
+					</div>
+				}
+			</>
+		)
+	}, [prompts, usingPerplexity]);
+
 	/**
 	 * Memoized GPT form to avoid multi rerender
 	 * Depends on : dark mode, prompts, selected prompt
@@ -336,29 +432,81 @@ const App = () => {
 	 * @param {string} model - Chosen GPT model
 	 * @param {string} content - Content to send
 	 * @param {Object} [headers] - Additional headers
+	 * @param {boolean} [usePerplexity] - Use Perplexity
+	 * @param {boolean} [onlyPerplexity] - Use ONLY Perplexity
+	 * @param {Function} replaceContent - Function to prepare content for models
 	 * @return {Promise<any>}
 	 */
-	const fetch_result = async (url, model, content, headers = {}) => await fetch(api_url + url, {
-		method: 'POST',
-		headers: Object.assign({
-			"Authorization": `Bearer ${api_key}`
-		}, headers),
-		body: JSON.stringify({
-			model: model,
-			messages: [{
-				role: 'user',
-				content: content
-			}],
-			temperature: 0.5,
-			max_tokens: 4096,
-			top_p: 1,
-			frequency_penalty: 0,
-			presence_penalty: 0
-		})
-	} ).then( response => response.json() ).catch( error => {
-		alert("Une erreur est survenue. Regardez la console.");
-		console.error( error );
-	} );
+	const fetch_result = async (url, model, content, headers = {}, usePerplexity=false, onlyPerplexity=false, replaceContent) => {
+		if( usePerplexity ) {
+			let perplexityResult = await fetch( 'https://api.perplexity.ai/chat/completions', {
+				method: 'POST',
+				headers: {
+					"Authorization": `Bearer ${perplexity_key}`,
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({
+					model: "sonar",
+					"messages": [
+						{
+							"role": "user",
+							"content": content
+						}
+					],
+					"temperature": 0.2,
+					"top_p": 0.9,
+					"search_domain_filter": [
+						"perplexity.ai"
+					],
+					"return_images": false,
+					"return_related_questions": false,
+					"search_recency_filter": "month",
+					"top_k": 0,
+					"stream": false,
+					"presence_penalty": 0,
+					"frequency_penalty": 1
+				})
+			} ).then( response => response.json() ).catch( error => {
+				alert("Une erreur est survenue. Regardez la console.");
+				console.error( error );
+			} );
+			if(
+				perplexityResult &&
+				perplexityResult?.choices?.length > 0 &&
+				perplexityResult?.choices[0]?.message?.content
+			) {
+				if( perplexityResult?.citations.length > 0 ) {
+					setSources([...perplexityResult?.citations]);
+				}
+				setPerplexityResponse(perplexityResult?.choices[0]?.message?.content);
+				if( onlyPerplexity ) {
+					return perplexityResult;
+				}
+				content = replaceContent(perplexityResult?.choices[0]?.message?.content);
+			}
+		}
+		return await fetch(api_url + url, {
+			method: 'POST',
+			headers: Object.assign({
+				"Authorization": `Bearer ${api_key}`
+			}, headers),
+			body: JSON.stringify({
+				model: model,
+				messages: [{
+					role: 'user',
+					content: content
+				}],
+				temperature: 0.5,
+				max_tokens: 4096,
+				top_p: 1,
+				frequency_penalty: 0,
+				presence_penalty: 0
+			})
+		} ).then( response => response.json() ).catch( error => {
+			alert("Une erreur est survenue. Regardez la console.");
+			console.error( error );
+		} );
+	};
 
 	useEffect(() => {
 		if (prompts.length === 0) {
@@ -435,13 +583,63 @@ const App = () => {
 				/>
 				{
 					result === null
-						? current_form
+						? <>
+							{current_form}
+							{perplexityChoice}
+						</>
 						: <>
-							<pre
-								className="text-wrap w-full"
-							>{result}</pre>
+							<div
+								className="flex flex-col gap-2"
+							>
+								{
+									usingPerplexity && <>
+										<h2
+											className="text-3xl font-medium"
+										>Perplexity</h2>
+										<div
+											dangerouslySetInnerHTML={{
+												__html: DOMPurify.sanitize(marked.parse(perplexityResponse))
+											}}
+										/>
+										{
+											sources && sources.length > 0 && <>
+												<h3
+													className="text-xl font-medium"
+												>Sources</h3>
+												<ul
+													className="list-disc w-full flex flex-col justify-start ml-8"
+												>
+													{
+														sources.map(i => <li
+															key={window.crypto.randomUUID()}
+														>
+															<a
+																href={i}
+																className="text-blue-600"
+															>{i}</a>
+														</li>)
+													}
+												</ul>
+											</>
+										}
+										<hr
+											className="h-0 w-full border-[#6c757d]/50"
+										/>
+									</>
+								}
+								{
+									!usingOnlyPerplexity && <>
+										<h2
+											className="text-3xl font-medium"
+										>GPT</h2>
+										<pre
+											className="text-wrap w-full"
+										>{result}</pre>
+									</>
+								}
+							</div>
 							<button
-								onClick={()=>{
+								onClick={() => {
 									navigator.clipboard.writeText(result);
 									alert("Résultat copié.");
 								}}
@@ -459,43 +657,49 @@ const App = () => {
 							if (loader.current === null) return;
 							loader.current.classList.remove('hidden');
 
-							let selected_prompt = prompts.filter(i => i.title===prompt) ?? prompts[0];
-							if(
+							let selected_prompt = prompts.filter(i => i.title === prompt) ?? prompts[0];
+							if (
 								Array.isArray(selected_prompt) &&
 								selected_prompt.length !== 0
 							) selected_prompt = selected_prompt[0];
-							if( selected_prompt.type === Prompt_Type.TEXT ) {
-								let final_prompt = selected_prompt.prompt;
-								[...document.querySelectorAll('.clearable')].map(i=>({
-									search: i.dataset.target,
-									value: i.value
-								})).forEach(i=>final_prompt=final_prompt.replace(`[${i.search}]`,i.value));
+							if (selected_prompt.type === Prompt_Type.TEXT) {
+								const replacePrompt = content => {
+									let temp = content;
+									[...document.querySelectorAll('.clearable')].map(i => ({
+										search: i.dataset.target,
+										value: i.value
+									})).forEach(i => temp = temp.replace(`[${i.search}]`, i.value))
+									return temp;
+								};
 								let result = await fetch_result(
 									selected_prompt.endpoint,
 									model.current.selectedOptions[0].value,
-									final_prompt,
+									replacePrompt(selected_prompt.prompt),
 									selected_prompt.headers ?? {
 										"Content-Type": "application/json"
-									}
+									},
+									usePerplexity?.current?.checked ?? false,
+									onlyPerplexity?.current?.checked ?? false,
+									replacePrompt
 								);
-								if(
+								if (
 									result === null ||
 									result === undefined ||
-									! result.hasOwnProperty( 'choices' ) ||
-									! result.hasOwnProperty( 'id' ) ||
-									! result.hasOwnProperty( 'model' )
+									!result.hasOwnProperty('choices') ||
+									!result.hasOwnProperty('id') ||
+									!result.hasOwnProperty('model')
 								) {
 									alert("Une erreur est survenue. Regardez la console.");
 								} else {
 									setResult(result.choices[0].message.content);
-									loader.current.classList.add( 'hidden' );
-									buttonsRef.current.classList.add( 'hidden' );
-									choosePrompt.current.classList.add( 'hidden' );
+									loader.current.classList.add('hidden');
+									buttonsRef.current.classList.add('hidden');
+									choosePrompt.current.classList.add('hidden');
 								}
-							} else if( selected_prompt.type === Prompt_Type.FILE ) {
+							} else if (selected_prompt.type === Prompt_Type.FILE) {
 								let audio_input = document.querySelector('input[type="file"].clearable');
-								if(
-									! audio_input.files ||
+								if (
+									!audio_input.files ||
 									audio_input.files.length === 0
 								) {
 									alert("Veuillez sélectionner un fichier audio pour continuer.");
@@ -503,31 +707,31 @@ const App = () => {
 								}
 								const file = audio_input.files[0];
 								const form_data = new FormData();
-								form_data.append( 'file', file );
-								form_data.append( 'model', 'whisper-1' );
-								form_data.append( 'response_format', 'json' );
+								form_data.append('file', file);
+								form_data.append('model', 'whisper-1');
+								form_data.append('response_format', 'json');
 								try {
-									const response = await fetch( api_url + selected_prompt.endpoint, {
+									const response = await fetch(api_url + selected_prompt.endpoint, {
 										method: 'POST',
 										headers: Object.assign({
 											"Authorization": `Bearer ${api_key}`
 										}),
 										body: form_data
-									} );
-									if( ! response.ok ) {
+									});
+									if (!response.ok) {
 										const error = await response.text();
-										console.error( error );
-										alert( "Une erreur est survenue lors de la retranscription." );
+										console.error(error);
+										alert("Une erreur est survenue lors de la retranscription.");
 										return
 									}
 									const result = await response.json();
-									if( result.text ) {
+									if (result.text) {
 										setResult(result.text);
-										loader.current.classList.add( 'hidden' );
-										buttonsRef.current.classList.add( 'hidden' );
-										choosePrompt.current.classList.add( 'hidden' );
+										loader.current.classList.add('hidden');
+										buttonsRef.current.classList.add('hidden');
+										choosePrompt.current.classList.add('hidden');
 									} else {
-										alert( "Aucune retranscription possible." );
+										alert("Aucune retranscription possible.");
 									}
 								} catch (error) {
 									alert("Une erreur est survenue lors de la retranscription.");
@@ -538,13 +742,13 @@ const App = () => {
 					>Soumettre
 					</button>
 					<button
-						onClick={()=>[...document.querySelectorAll('.clearable')].forEach(i=>i.value='')}
+						onClick={() => [...document.querySelectorAll('.clearable')].forEach(i => i.value = '')}
 						className="text-white bg-[#6c757d] border border-[#6c757d] transition duration-150 hover:bg-[#5c636a] focus:bg-[#5c636a] px-2 py-1 w-fit h-fit rounded-md"
 					>Nouveau texte
 					</button>
 				</div>
-		  </div>
-	  </div>
+			</div>
+		</div>
 	);
 
 }
