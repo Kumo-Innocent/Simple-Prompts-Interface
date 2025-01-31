@@ -1,5 +1,4 @@
 import {useEffect, useMemo, useRef, useState} from "react";
-import base_prompts from "./prompts.json";
 
 const base_url = `${document.location.origin}/build/`;
 
@@ -94,8 +93,9 @@ const App = () => {
 	let base_prompts = require("./prompts.json");
 
 	const [dark, setDark] = useState(false);
+	const [versions, setVersions] = useState([]);
 	const [prompts, setPrompts] = useState([]);
-	const [prompt, setPrompt] = useState(base_prompts[0].title);
+	const [prompt, setPrompt] = useState(base_prompts.prompts[0].title);
 	const [result, setResult] = useState(null);
 
 	const loader = useRef(null);
@@ -111,11 +111,12 @@ const App = () => {
 					throw new Error(`HTTP error ! Status : ${response.status}`);
 				}
 				const data = await response.json();
-				const result = resolve_types(data, {
+				const result = resolve_types(data.prompts, {
 					'Prompt_Type': Prompt_Type,
 					'Input_Type': Input_Type
 				});
 				setPrompts([...result]);
+				setVersions([...data.versions]);
 			} catch (error) {
 				console.error("New error : ", error);
 			}
@@ -301,32 +302,33 @@ const App = () => {
 								></textarea>
 							</div>
 					}
-					<div
-						className="w-full"
-					>
-						<label
-							htmlFor="select-gpt"
-						>Sélectionnez la version de ChatGPT :</label>
-						<select
-							ref={model}
-							className="w-full block border border-[#deede6] p-2 rounded-md text-black"
-							name="select-gpt"
-							id="select-gpt"
+					{
+						current_prompt.type !== Prompt_Type.FILE && <div
+							className="w-full"
 						>
-							<option
-								value="gpt-3.5-turbo"
-							>GPT-3.5-turbo
-							</option>
-							<option
-								value="gpt-4o"
-							>GPT-4o
-							</option>
-						</select>
-					</div>
+							<label
+								htmlFor="select-gpt"
+							>Sélectionnez la version de ChatGPT :</label>
+							<select
+								ref={model}
+								className="w-full block border border-[#deede6] p-2 rounded-md text-black"
+								name="select-gpt"
+								id="select-gpt"
+							>
+								{
+									versions && versions.length > 0 && versions.map(i => <option
+										key={window.crypto.randomUUID()}
+										value={i.real}
+									>{i.display}
+									</option>)
+								}
+							</select>
+						</div>
+					}
 				</div>
 			</>
 		);
-	}, [dark,prompt,prompts]);
+	}, [dark, prompt, prompts]);
 
 	/**
 	 * Get GPT result for prompt with replaced content
@@ -336,7 +338,7 @@ const App = () => {
 	 * @param {Object} [headers] - Additional headers
 	 * @return {Promise<any>}
 	 */
-	const fetch_result = async (url, model, content, headers= {}) => await fetch( api_url + url, {
+	const fetch_result = async (url, model, content, headers = {}) => await fetch(api_url + url, {
 		method: 'POST',
 		headers: Object.assign({
 			"Authorization": `Bearer ${api_key}`
@@ -360,11 +362,12 @@ const App = () => {
 
 	useEffect(() => {
 		if (prompts.length === 0) {
-			const result = resolve_types(base_prompts, {
+			const result = resolve_types(base_prompts.prompts, {
 				'Prompt_Type': Prompt_Type,
 				'Input_Type': Input_Type
 			});
-			setPrompts([...base_prompts]);
+			setPrompts([...result]);
+			setVersions([...base_prompts.versions]);
 		}
 	}, [prompts]);
 
