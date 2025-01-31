@@ -106,6 +106,7 @@ const App = () => {
 	const [usingPerplexity, setUsingPerplexity] = useState(false);
 	const [usingOnlyPerplexity, setUsingOnlyPerplexity] = useState(false);
 	const [perplexityResponse, setPerplexityResponse] = useState('');
+	const [selectedInterval, setSelectedInterval] = useState('month');
 
 	const loader = useRef(null);
 	const model = useRef(null);
@@ -113,6 +114,7 @@ const App = () => {
 	const choosePrompt = useRef(null);
 	const usePerplexity = useRef(null);
 	const onlyPerplexity = useRef(null);
+	const allowedDomainsRef = useRef(null);
 
 	useEffect(() => {
 		async function fetchPrompts() {
@@ -271,12 +273,16 @@ const App = () => {
 			Array.isArray(current_prompt) &&
 			current_prompt.length !== 0
 		) current_prompt = current_prompt[0];
+		const handle_selected_interval = event => setSelectedInterval(event.target.value);
 		return (
 			<>
 				{
 					current_prompt?.perplexity && current_prompt?.perplexity === true && <div
-						className="w-full grid grid-cols-2"
+						className="w-full grid grid-cols-2 gap-2"
 					>
+						<hr
+							className="h-0 w-full border-[#6c757d]/50 col-span-full"
+						/>
 						<div
 							className="w-full flex justify-start"
 						>
@@ -308,42 +314,152 @@ const App = () => {
 							</div>
 						</div>
 						{
-							usingPerplexity && <div
-								className="w-full flex justify-start"
-							>
+							usingPerplexity && <>
 								<div
-									className="flex items-center h-5"
+									className="w-full flex justify-start"
 								>
-									<input
-										type="checkbox"
-										id="only-perplexity"
-										name="only-perplexity"
-										className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-0"
-										ref={onlyPerplexity}
-										onChange={() => setUsingOnlyPerplexity(prevState => !prevState)}
-									/>
+									<div
+										className="flex items-center h-5"
+									>
+										<input
+											type="checkbox"
+											id="only-perplexity"
+											name="only-perplexity"
+											className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-0"
+											ref={onlyPerplexity}
+											onChange={() => setUsingOnlyPerplexity(prevState => !prevState)}
+										/>
+									</div>
+									<div
+										className="ms-2 text-sm"
+									>
+										<label
+											htmlFor="only-perplexity"
+											className="font-medium text-gray-900"
+										>Utiliser <strong>seulement</strong> Perplexity</label>
+										<p
+											id="only-perplexity-helper"
+											className="text-xs font-normal text-gray-500"
+										>
+											Envoyer le prompt à Perplexity.
+										</p>
+									</div>
 								</div>
 								<div
-									className="ms-2 text-sm"
+									className="w-full flex justify-start col-span-full"
+								>
+									<div
+										className="text-sm"
+									>
+										<label
+											htmlFor="interval-month"
+											className="font-medium text-gray-900"
+										>Limite de temps</label>
+										<p
+											id="only-perplexity-helper"
+											className="text-xs font-normal text-gray-500"
+										>
+											Intervalle dans lequel Perplexity cherche des informations
+										</p>
+									</div>
+									<div
+										className="ms-6 flex flex-wrap items-center text-sm gap-6"
+									>
+										<div
+											className="flex items-center"
+										>
+											<input
+												type="radio"
+												id="interval-month"
+												name="interval-radio"
+												value="month"
+												className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-0"
+												checked={selectedInterval === 'month'}
+												onChange={handle_selected_interval}
+											/>
+											<label
+												htmlFor="interval-month"
+												className="ms-2 text-sm font-medium text-gray-900"
+											>Mois</label>
+										</div>
+										<div
+											className="flex items-center"
+										>
+											<input
+												type="radio"
+												id="interval-week"
+												name="interval-radio"
+												value="week"
+												className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-0"
+												checked={selectedInterval === 'week'}
+												onChange={handle_selected_interval}
+											/>
+											<label
+												htmlFor="interval-week"
+												className="ms-2 text-sm font-medium text-gray-900"
+											>Semaine</label>
+										</div>
+										<div
+											className="flex items-center"
+										>
+											<input
+												type="radio"
+												id="interval-day"
+												name="interval-radio"
+												value="day"
+												className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-0"
+												checked={selectedInterval === 'day'}
+												onChange={handle_selected_interval}
+											/>
+											<label
+												htmlFor="interval-day"
+												className="ms-2 text-sm font-medium text-gray-900"
+											>Jour</label>
+										</div>
+										<div
+											className="flex items-center"
+										>
+											<input
+												type="radio"
+												id="interval-hour"
+												name="interval-radio"
+												value="hour"
+												className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-0"
+												checked={selectedInterval === 'hour'}
+												onChange={handle_selected_interval}
+											/>
+											<label
+												htmlFor="interval-hour"
+												className="ms-2 text-sm font-medium text-gray-900"
+											>Heure</label>
+										</div>
+									</div>
+								</div>
+								<div
+									className="w-full col-span-full"
 								>
 									<label
-										htmlFor="only-perplexity"
-										className="font-medium text-gray-900"
-									>Utiliser <strong>seulement</strong> Perplexity</label>
-									<p
-										id="only-perplexity-helper"
-										className="text-xs font-normal text-gray-500"
-									>
-										Envoyer le prompt à Perplexity.
-									</p>
+										htmlFor="search-domains"
+									>Domaines pour la recherches <i>(séparés par des virgules)</i> :
+									</label>
+									<input
+										ref={allowedDomainsRef}
+										className="clearable w-full block border border-[#deede6] p-2 rounded-md text-black"
+										placeholder="perplexity.ai,google.com,actu.fr"
+										name="search-domains"
+										id="search-domains"
+									/>
 								</div>
-							</div>
+							</>
 						}
+						<hr
+							className="h-0 w-full border-[#6c757d]/50 col-span-full"
+						/>
 					</div>
 				}
 			</>
 		)
-	}, [prompts, usingPerplexity]);
+	}, [prompt, prompts, usingPerplexity, selectedInterval]);
 
 	/**
 	 * Memoized GPT form to avoid multi rerender
@@ -374,7 +490,7 @@ const App = () => {
 				>
 					{
 						Array.isArray(current_prompt.variable)
-							? current_prompt.variable.map(i=>(
+							? current_prompt.variable.map(i => (
 								<div
 									className="w-full"
 									key={window.crypto.randomUUID()}
@@ -448,6 +564,7 @@ const App = () => {
 				selected_prompt.hasOwnProperty( 'perplexity_prompt' ) &&
 				selected_prompt.length !== 0
 			) content = replaceContent(selected_prompt.perplexity_prompt);
+			let usedDomains = allowedDomainsRef?.current?.value?.split(',') ?? ["perplexity.ai"];
 			let perplexityResult = await fetch( 'https://api.perplexity.ai/chat/completions', {
 				method: 'POST',
 				headers: {
@@ -464,12 +581,10 @@ const App = () => {
 					],
 					"temperature": 0.2,
 					"top_p": 0.9,
-					"search_domain_filter": [
-						"perplexity.ai"
-					],
+					"search_domain_filter": usedDomains,
 					"return_images": false,
 					"return_related_questions": false,
-					"search_recency_filter": "month",
+					"search_recency_filter": selectedInterval,
 					"top_k": 0,
 					"stream": false,
 					"presence_penalty": 0,
