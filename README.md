@@ -35,6 +35,7 @@ Here is the definition of a Prompt :
 | variable          | Array of variables for the prompt                           | Variable[]                                                                                                         | Yes      |
 | headers           | Add some headers to the request                             | Object [_(same as fetch)_](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch#setting_headers) | No       |
 | perplexity        | Allow using Perplexity with this prompt                     | boolean _(true/false)_                                                                                             | No       |
+| perplexity_prompt | The prompt used for perplexity                              | string                                                                                                             | No       |
 
 <a name="gpt-prompts-variables"></a>
 ### Prompt's variables
@@ -50,6 +51,7 @@ Here is the definition of a Variable :
 | min               | FOR `Input_Type.NUMBER` AND `Input_Type.RANGE`, min of the input | number                                     | No       |
 | max               | FOR `Input_Type.NUMBER` AND `Input_Type.RANGE`, max of the input | number                                     | No       |
 | value             | FOR `Input_Type.RANGE`, default value of input                   | number                                     | No       |
+| from_result       | Replace the variable with perplexity's result to send to GPT     | boolean                                    | No       |
 
 <a name="gpt-prompts-input-types"></a>
 ### Input Types

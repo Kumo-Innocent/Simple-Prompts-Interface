@@ -145,6 +145,31 @@
           "value": 190
         }
       ]
+    },
+    {
+      "display": "Test With Perplexity",
+      "type": "Prompt_Type.TEXT",
+      "title": "test-perplexity",
+      "endpoint": "/chat/completions",
+      "perplexity": true,
+      "perplexity_prompt": "Réponds à la question suivante : [PROMPT_VAR]",
+      "prompt": "Utilise le texte suivant pour créer un article web, en ne dépassant surtout pas les [PROMPT_MAX] caractères : [PROMPT_VAR]",
+      "variable": [
+        {
+          "search": "PROMPT_VAR",
+          "from_result": true,
+          "type": "Input_Type.TEXT",
+          "title": "Réponds à cette question"
+        },
+        {
+          "search": "PROMPT_MAX",
+          "type": "Input_Type.RANGE",
+          "title": "Nombre de caractères max",
+          "min": 0,
+          "max": 4000,
+          "value": 1000
+        }
+      ]
     }
   ]
 }

@@ -20,6 +20,7 @@ const base_url = `${document.location.origin}/build/`;
  * @property {number} [min] - The min for NUMBER or RANGE type
  * @property {number} [max] - The max for NUMBER or RANGE type
  * @property {number} [value] - The current value for RANGE type
+ * @property {boolean} [from_result] - Replace var by perplexity prompt's result
  */
 
 /**
@@ -27,6 +28,7 @@ const base_url = `${document.location.origin}/build/`;
  * @property {Prompt_Type} type - The actual prompt type
  * @property {string} title - The prompt title
  * @property {string} prompt - The actual prompt
+ * @property {string} [perplexity_prompt] - The actual perplexity prompt
  * @property {string} display - Display title
  * @property {string} endpoint - Used endpoint
  * @property {string|Variable[]} variable - Variable name to replace with input
@@ -437,6 +439,15 @@ const App = () => {
 	 */
 	const fetch_result = async (url, model, content, headers = {}, usePerplexity=false, onlyPerplexity=false, replaceContent) => {
 		if( usePerplexity ) {
+			let selected_prompt = prompts.filter(i => i.title === prompt) ?? prompts[0];
+			if (
+				Array.isArray(selected_prompt) &&
+				selected_prompt.length !== 0
+			) selected_prompt = selected_prompt[0];
+			if(
+				selected_prompt.hasOwnProperty( 'perplexity_prompt' ) &&
+				selected_prompt.length !== 0
+			) content = replaceContent(selected_prompt.perplexity_prompt);
 			let perplexityResult = await fetch( 'https://api.perplexity.ai/chat/completions', {
 				method: 'POST',
 				headers: {
@@ -480,7 +491,10 @@ const App = () => {
 				if( onlyPerplexity ) {
 					return perplexityResult;
 				}
-				content = replaceContent(perplexityResult?.choices[0]?.message?.content);
+				let var_to_replace = selected_prompt.variable.filter( i => i?.from_result ?? false )[0];
+				content = replaceContent(selected_prompt.prompt, {
+					[var_to_replace.search]: perplexityResult?.choices[0]?.message?.content
+				});
 			}
 		}
 		return await fetch(api_url + url, {
@@ -636,14 +650,25 @@ const App = () => {
 									</>
 								}
 							</div>
-							<button
-								onClick={() => {
-									navigator.clipboard.writeText(result);
-									alert("Résultat copié.");
-								}}
-								className="text-white bg-[#6c757d] border border-[#6c757d] transition duration-150 hover:bg-[#5c636a] focus:bg-[#5c636a] px-2 py-1 w-fit h-fit rounded-md"
-							>Copier le résultat
-							</button>
+							<div
+								className="flex gap-2 items-center justify-center"
+							>
+								<button
+									onClick={() => {
+										navigator.clipboard.writeText(result);
+										alert("Résultat copié.");
+									}}
+									className="text-white bg-[#6c757d] border border-[#6c757d] transition duration-150 hover:bg-[#5c636a] focus:bg-[#5c636a] px-2 py-1 w-fit h-fit rounded-md"
+								>Copier le résultat
+								</button>
+								<button
+									onClick={() => {
+										window.location.reload();
+									}}
+									className="text-white bg-[#6c757d] border border-[#6c757d] transition duration-150 hover:bg-[#5c636a] focus:bg-[#5c636a] px-2 py-1 w-fit h-fit rounded-md"
+								>Retour à l'accueil
+								</button>
+							</div>
 						</>
 				}
 				<div
@@ -661,11 +686,11 @@ const App = () => {
 								selected_prompt.length !== 0
 							) selected_prompt = selected_prompt[0];
 							if (selected_prompt.type === Prompt_Type.TEXT) {
-								const replacePrompt = content => {
+								const replacePrompt = (content,replacement={}) => {
 									let temp = content;
 									[...document.querySelectorAll('.clearable')].map(i => ({
 										search: i.dataset.target,
-										value: i.value
+										value: replacement?.[i.dataset.target] ?? i.value
 									})).forEach(i => temp = temp.replace(`[${i.search}]`, i.value))
 									return temp;
 								};
