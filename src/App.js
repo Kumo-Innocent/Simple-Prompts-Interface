@@ -1,7 +1,5 @@
 import {useEffect, useMemo, useRef, useState} from "react";
-
-import { marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
-
+import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 
 const base_url = `${document.location.origin}/build/`;
