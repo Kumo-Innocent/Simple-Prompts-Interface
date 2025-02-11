@@ -29,11 +29,15 @@ const base_url = `${document.location.origin}/build/`;
  * @property {string} title - The prompt title
  * @property {string} prompt - The actual prompt
  * @property {string} [perplexity_prompt] - The actual perplexity prompt
+ * @property {string} [mistral_prompt] - The actual mistral prompt
+ * @property {string} [perplexity_model] - The actual perplexity model
+ * @property {string} [mistral_model] - The actual mistral model
  * @property {string} display - Display title
  * @property {string} endpoint - Used endpoint
  * @property {string|Variable[]} variable - Variable name to replace with input
  * @property {Object} [headers] - Additional headers for request
  * @property {boolean} [perplexity] - Do Perplexity can be used with this prompt
+ * @property {boolean} [mistral] - Do Mistral AI can be used with this prompt
  */
 
 /**
@@ -105,7 +109,10 @@ const App = () => {
 	const [sources, setSources] = useState([]);
 	const [usingPerplexity, setUsingPerplexity] = useState(false);
 	const [usingOnlyPerplexity, setUsingOnlyPerplexity] = useState(false);
+	const [usingMistral, setUsingMistral] = useState(false);
+	const [usingOnlyMistral, setUsingOnlyMistral] = useState(false);
 	const [perplexityResponse, setPerplexityResponse] = useState('');
+	const [mistralResponse, setMistralResponse] = useState('');
 	const [selectedInterval, setSelectedInterval] = useState('month');
 
 	const loader = useRef(null);
@@ -114,6 +121,8 @@ const App = () => {
 	const choosePrompt = useRef(null);
 	const usePerplexity = useRef(null);
 	const onlyPerplexity = useRef(null);
+	const useMistral = useRef(null);
+	const onlyMistral = useRef(null);
 	const allowedDomainsRef = useRef(null);
 
 	useEffect(() => {
@@ -147,6 +156,11 @@ const App = () => {
 	 * @type string
 	 */
 	const perplexity_key = process.env.REACT_APP_PERPLEXITY_KEY;
+	/**
+	 * Mistral AI KEY
+	 * @type string
+	 */
+	const mistral_key = process.env.REACT_APP_MISTRAL_KEY;
 	/**
 	 * GPT API URL
 	 * @type string
@@ -267,6 +281,9 @@ const App = () => {
 		}
 	};
 
+	/**
+	 * Memoized inputs for perplexity
+	 */
 	const perplexityChoice = useMemo(()=>{
 		let current_prompt = prompts.filter(i => i.title === prompt) ?? prompts[0];
 		if (
@@ -462,6 +479,135 @@ const App = () => {
 	}, [prompt, prompts, usingPerplexity, selectedInterval]);
 
 	/**
+	 * Memoized inputs for mistral ai
+	 */
+	const mistralChoice = useMemo(()=>{
+		let current_prompt = prompts.filter(i => i.title === prompt) ?? prompts[0];
+		if (
+			Array.isArray(current_prompt) &&
+			current_prompt.length !== 0
+		) current_prompt = current_prompt[0];
+		return (
+			<>
+				{
+					current_prompt?.mistral && current_prompt?.mistral === true && <div
+						className="w-full grid grid-cols-2 gap-2"
+					>
+						<hr
+							className="h-0 w-full border-[#6c757d]/50 col-span-full"
+						/>
+						<div
+							className="w-full flex justify-start"
+						>
+							<div
+								className="flex items-center h-5"
+							>
+								<input
+									type="checkbox"
+									id="use-mistral"
+									name="use-mistral"
+									className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-0"
+									ref={useMistral}
+									onChange={() => setUsingMistral(prevState => !prevState)}
+								/>
+							</div>
+							<div
+								className="ms-2 text-sm"
+							>
+								<label
+									htmlFor="use-mistral"
+									className="font-medium text-gray-900"
+								>Utiliser Mistral AI</label>
+								<p
+									id="use-mistral-helper"
+									className="text-xs font-normal text-gray-500"
+								>
+									Envoyer le prompt à Mistral AI, puis à Chat GPT
+								</p>
+							</div>
+						</div>
+						{
+							usingMistral && <>
+								<div
+									className="w-full flex justify-start"
+								>
+									<div
+										className="flex items-center h-5"
+									>
+										<input
+											type="checkbox"
+											id="only-mistral"
+											name="only-mistral"
+											className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-0"
+											ref={onlyMistral}
+											onChange={() => setUsingOnlyMistral(prevState => !prevState)}
+										/>
+									</div>
+									<div
+										className="ms-2 text-sm"
+									>
+										<label
+											htmlFor="only-mistral"
+											className="font-medium text-gray-900"
+										>Utiliser <strong>seulement</strong> Mistral AI</label>
+										<p
+											id="only-mistral-helper"
+											className="text-xs font-normal text-gray-500"
+										>
+											Envoyer le prompt à Mistral AI.
+										</p>
+									</div>
+								</div>
+							</>
+						}
+						<hr
+							className="h-0 w-full border-[#6c757d]/50 col-span-full"
+						/>
+					</div>
+				}
+			</>
+		)
+	}, [prompt, prompts, usingMistral]);
+
+	/**
+	 * Memoized GPT model choices
+	 */
+	const modelChoice = useMemo(()=>{
+		let current_prompt = prompts.filter(i => i.title === prompt) ?? prompts[0];
+		if (
+			Array.isArray(current_prompt) &&
+			current_prompt.length !== 0
+		) current_prompt = current_prompt[0];
+		return (
+			<>
+				{
+					current_prompt.type !== Prompt_Type.FILE && <div
+						className="w-full"
+					>
+						<label
+							htmlFor="select-gpt"
+						>Sélectionnez la version de ChatGPT :</label>
+						<select
+							ref={model}
+							className="w-full block border border-[#deede6] p-2 rounded-md text-black"
+							name="select-gpt"
+							id="select-gpt"
+						>
+							{
+								versions && versions.length > 0 && versions.map(i => <option
+									key={window.crypto.randomUUID()}
+									value={i.real}
+								>{i.display}
+								</option>)
+							}
+						</select>
+					</div>
+				}
+			</>
+		);
+	}, [prompt, prompts]);
+
+	/**
 	 * Memoized GPT form to avoid multi rerender
 	 * Depends on : dark mode, prompts, selected prompt
 	 */
@@ -514,29 +660,6 @@ const App = () => {
 								></textarea>
 							</div>
 					}
-					{
-						current_prompt.type !== Prompt_Type.FILE && <div
-							className="w-full"
-						>
-							<label
-								htmlFor="select-gpt"
-							>Sélectionnez la version de ChatGPT :</label>
-							<select
-								ref={model}
-								className="w-full block border border-[#deede6] p-2 rounded-md text-black"
-								name="select-gpt"
-								id="select-gpt"
-							>
-								{
-									versions && versions.length > 0 && versions.map(i => <option
-										key={window.crypto.randomUUID()}
-										value={i.real}
-									>{i.display}
-									</option>)
-								}
-							</select>
-						</div>
-					}
 				</div>
 			</>
 		);
@@ -550,10 +673,57 @@ const App = () => {
 	 * @param {Object} [headers] - Additional headers
 	 * @param {boolean} [usePerplexity] - Use Perplexity
 	 * @param {boolean} [onlyPerplexity] - Use ONLY Perplexity
+	 * @param {boolean} [useMistral] - Use Mistral
+	 * @param {boolean} [onlyMistral] - Use ONLY Mistral
 	 * @param {Function} replaceContent - Function to prepare content for models
 	 * @return {Promise<any>}
 	 */
-	const fetch_result = async (url, model, content, headers = {}, usePerplexity=false, onlyPerplexity=false, replaceContent) => {
+	const fetch_result = async (url, model, content, headers = {}, usePerplexity=false, onlyPerplexity=false, useMistral=false, onlyMistral=false, replaceContent) => {
+		if( useMistral ) {
+			let selected_prompt = prompts.filter(i => i.title === prompt) ?? prompts[0];
+			if (
+				Array.isArray(selected_prompt) &&
+				selected_prompt.length !== 0
+			) selected_prompt = selected_prompt[0];
+			if(
+				selected_prompt.hasOwnProperty( 'mistral_prompt' ) &&
+				selected_prompt.length !== 0
+			) content = replaceContent(selected_prompt.mistral_prompt);
+			let mistralResult = await fetch( 'https://api.mistral.ai/v1/chat/completions', {
+				method: 'POST',
+				headers: {
+					"Authorization": `Bearer ${mistral_key}`,
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({
+					model: selected_prompt?.mistral_model ?? "mistral-tiny",
+					messages: [
+						{
+							content: content,
+							role: "user"
+						}
+					]
+				})
+			} ).then( response => response.json() ).catch( error => {
+				alert("Une erreur est survenue. Regardez la console.");
+				console.error( error );
+			} );
+			if(
+				mistralResult &&
+				mistralResult?.choices?.length > 0 &&
+				mistralResult?.choices[0]?.message?.content
+			) {
+				setMistralResponse(mistralResult?.choices[0]?.message?.content);
+				if( onlyPerplexity ) {
+					return mistralResult;
+				}
+				let var_to_replace = selected_prompt.variable.filter( i => i?.from_result ?? false )[0] ?? selected_prompt.variable[0];
+				content = replaceContent(selected_prompt.prompt, {
+					[var_to_replace.search]: mistralResult?.choices[0]?.message?.content
+				});
+			}
+		}
+
 		if( usePerplexity ) {
 			let selected_prompt = prompts.filter(i => i.title === prompt) ?? prompts[0];
 			if (
@@ -572,7 +742,7 @@ const App = () => {
 					"Content-Type": "application/json"
 				},
 				body: JSON.stringify({
-					model: "sonar",
+					model: selected_prompt.perplexity_model ?? "sonar",
 					"messages": [
 						{
 							"role": "user",
@@ -606,7 +776,7 @@ const App = () => {
 				if( onlyPerplexity ) {
 					return perplexityResult;
 				}
-				let var_to_replace = selected_prompt.variable.filter( i => i?.from_result ?? false )[0];
+				let var_to_replace = selected_prompt.variable.filter( i => i?.from_result ?? false )[0] ?? selected_prompt.variable[0];
 				content = replaceContent(selected_prompt.prompt, {
 					[var_to_replace.search]: perplexityResult?.choices[0]?.message?.content
 				});
@@ -712,7 +882,9 @@ const App = () => {
 					result === null
 						? <>
 							{current_form}
-							{perplexityChoice}
+							{!usingOnlyPerplexity && !usingOnlyMistral && modelChoice}
+							{!usingOnlyPerplexity && mistralChoice}
+							{!usingOnlyMistral && perplexityChoice}
 						</>
 						: <>
 							<div
@@ -755,7 +927,17 @@ const App = () => {
 									</>
 								}
 								{
-									!usingOnlyPerplexity && <>
+									!usingOnlyPerplexity && mistralResponse && <>
+										<h2
+											className="text-3xl font-medium"
+										>Mistral AI</h2>
+										<pre
+											className="text-wrap w-full"
+										>{result}</pre>
+									</>
+								}
+								{
+									!usingOnlyPerplexity && !usingOnlyMistral && <>
 										<h2
 											className="text-3xl font-medium"
 										>GPT</h2>
@@ -818,6 +1000,8 @@ const App = () => {
 									},
 									usePerplexity?.current?.checked ?? false,
 									onlyPerplexity?.current?.checked ?? false,
+									useMistral?.current?.checked ?? false,
+									onlyMistral?.current?.checked ?? false,
 									replacePrompt
 								);
 								if (
