@@ -993,7 +993,7 @@ const App = () => {
 								};
 								let result = await fetch_result(
 									selected_prompt.endpoint,
-									model.current.selectedOptions[0].value,
+									model?.current?.selectedOptions?.[0]?.value ?? "gpt-3.5-turbo",
 									replacePrompt(selected_prompt.prompt),
 									selected_prompt.headers ?? {
 										"Content-Type": "application/json"
